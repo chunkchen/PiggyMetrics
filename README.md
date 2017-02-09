@@ -6,39 +6,40 @@
 # Piggy Metrics
 
 **一种管理个人财务状况的简单方法** 
+
 这是一个 概念验证型（[proof-of-concept](http://my-piggymetrics.rhcloud.com)）应用，通过使用Spring Boot, Spring Cloud 和 Docker，用简洁的用户界面对微服务体系模式（[Microservice Architecture Pattern](http://martinfowler.com/microservices/)）进行论证和呈现。
 
 
 ![](https://cloud.githubusercontent.com/assets/6069066/13864234/442d6faa-ecb9-11e5-9929-34a9539acde0.png)
 ![Piggy Metrics](https://cloud.githubusercontent.com/assets/6069066/13830155/572e7552-ebe4-11e5-918f-637a49dff9a2.gif)
 
-## Functional services
+## 功能服务
 
-PiggyMetrics was decomposed into three core microservices. All of them are independently deployable applications, organized around certain business capability.
+PiggyMetrics可以被分解成三个核心的微服务。这三个微服务是独立部署的应用，围绕特定的业务能力进行组织。
 
 <img width="880" alt="Functional services" src="https://cloud.githubusercontent.com/assets/6069066/13900465/730f2922-ee20-11e5-8df0-e7b51c668847.png">
 
-#### Account service
-Contains general user input logic and validation: incomes/expenses items, savings and account settings.
+#### 帐户服务
+包括常规的用户输入逻辑和校验：个人收益/开支明细、存款和账户设置。
 
 Method	| Path	| Description	| User authenticated	| Available from UI
 ------------- | ------------------------- | ------------- |:-------------:|:----------------:|
-GET	| /accounts/{account}	| Get specified account data	|  | 	
-GET	| /accounts/current	| Get current account data	| × | ×
-GET	| /accounts/demo	| Get demo account data (pre-filled incomes/expenses items, etc)	|   | 	×
-PUT	| /accounts/current	| Save current account data	| × | ×
-POST	| /accounts/	| Register new account	|   | ×
+GET	| /accounts/{account}	| 获取指定账户数据	|  | 	
+GET	| /accounts/current	| 获取当前账户数据	| × | ×
+GET	| /accounts/demo	| 获取演示账户数据（例如预先输入的收益/开支明细）	|   | 	×
+PUT	| /accounts/current	| 保存当前账户数据	| × | ×
+POST	| /accounts/	| 注册新账户	|   | ×
 
 
-#### Statistics service
-Performs calculations on major statistics parameters and captures time series for each account. Datapoint contains values, normalized to base currency and time period. This data is used to track cash flow dynamics in account lifetime (fancy charts not yet implemented in UI).
+#### 统计服务
+在主要的统计参数和获取时间序列方面为每个账户执行统计操作。数据点包括标准化后的基础货币、时间序列等值。这些数据可用于在账户生命周期内动态的跟踪现金流。（用户界面中暂未实现绚丽的图标分析）
 
 Method	| Path	| Description	| User authenticated	| Available from UI
 ------------- | ------------------------- | ------------- |:-------------:|:----------------:|
-GET	| /statistics/{account}	| Get specified account statistics	          |  | 	
-GET	| /statistics/current	| Get current account statistics	| × | × 
-GET	| /statistics/demo	| Get demo account statistics	|   | × 
-PUT	| /statistics/{account}	| Create or update time series datapoint for specified account	|   | 
+GET	| /statistics/{account}	| 获取指定账户统计数据 |  | 	
+GET	| /statistics/current	| 获取当前账户统计数据	| × | × 
+GET	| /statistics/demo	| 获取演示账户统计数据	|   | × 
+PUT	| /statistics/{account}	| 创建或更新指定账户的具体时间元数据	|   | 
 
 
 #### Notification service
