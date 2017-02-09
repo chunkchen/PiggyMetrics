@@ -56,18 +56,21 @@ PUT	| /notifications/settings/current	| 保存当前通知设置信息	| × | ×
 - 服务之间的通讯非常简单：微服务只使用同步的REST API进行通信。现实情况中，常见的做法是结合使用不同的交互方式。例如：为了解耦服务和缓存消息，GET操作中一般使用同步的方式请求和获取数据；而在创建和更新操作中则通过消息代理实现异步处理。这些方法将达成最终一致（[eventual consistency](http://martinfowler.com/articles/microservice-trade-offs.html#consistency)）的目标。
 
 
-## Infrastructure services
-There's a bunch of common patterns in distributed systems, which could help us to make described core services work. [Spring cloud](http://projects.spring.io/spring-cloud/) provides powerful tools that enhance Spring Boot applications behaviour to implement those patterns. I'll cover them briefly.
+## 基础设施服务
+分布式系统中存在大量的公共模式，它们可以帮助我们专注于核心的服务实现。[Spring cloud](http://projects.spring.io/spring-cloud/)提供了一系列强有力的工具增强了Spring Boot应用，使得上述公共模式得以实现。我将简要介绍它们。
+
 <img width="880" alt="Infrastructure services" src="https://cloud.githubusercontent.com/assets/6069066/13906840/365c0d94-eefa-11e5-90ad-9d74804ca412.png">
 ### Config service
-[Spring Cloud Config](http://cloud.spring.io/spring-cloud-config/spring-cloud-config.html) is horizontally scalable centralized configuration service for distributed systems. It uses a pluggable repository layer that currently supports local storage, Git, and Subversion. 
+[Spring Cloud Config](http://cloud.spring.io/spring-cloud-config/spring-cloud-config.html) 是为分布式系统提供的水平可伸缩的集中配置服务。它使用一个可插入的仓库层,目前支持本地存储,Git和Subversion。
 
-In this project, I use `native profile`, which simply loads config files from the local classpath. You can see `shared` directory in [Config service resources](https://github.com/sqshq/PiggyMetrics/tree/master/config/src/main/resources). Now, when Notification-service requests it's configuration, Config service responses with `shared/notification-service.yml` and `shared/application.yml` (which is shared between all client applications).
+本项目中,我使用可轻松加载到本地classpath中的 `native profile`。你可以在 [Config service resources](https://github.com/sqshq/PiggyMetrics/tree/master/config/src/main/resources)中看到共享目录。当通知服务发起访问自身配置的请求时, Config service以`shared/notification-service.yml` 和`shared/application.yml`文件的方式进行响应（在所有客户端程序中共享）。
 
-##### Client side usage
-Just build Spring Boot application with `spring-cloud-starter-config` dependency, autoconfiguration will do the rest.
 
-Now you don't need any embedded properties in your application. Just provide `bootstrap.yml` with application name and Config service url:
+##### 客户端使用
+通过`spring-cloud-starter-config`依赖构建 Spring Boot应用，剩下的部分将会自动构建。
+
+在`bootstrap.yml`中定义好应用的名称和Config service 的url后，你的应用中将不再需要任何内置的配置文件。
+
 ```yml
 spring:
   application:
@@ -78,18 +81,20 @@ spring:
       fail-fast: true
 ```
 
-##### With Spring Cloud Config, you can change app configuration dynamically. 
-For example, [EmailService bean](https://github.com/sqshq/PiggyMetrics/blob/master/notification-service/src/main/java/com/piggymetrics/notification/service/EmailServiceImpl.java) was annotated with `@RefreshScope`. That means, you can change e-mail text and subject without rebuild and restart Notification service application.
+##### 使用Spring Cloud Config，您可以动态更改应用配置。 
+例如，[EmailService bean](https://github.com/sqshq/PiggyMetrics/blob/master/notification-service/src/main/java/com/piggymetrics/notification/service/EmailServiceImpl.java)用`@RefreshScope`注释，这意味着您可以在不重新编译和重启通知服务应用的情况下，更改电子邮件文本和主题。
 
-First, change required properties in Config server. Then, perform refresh request to Notification service:
+
+首先，在Config服务器中更改所需的属性。然后，对Notification服务执行刷新请求:
 `curl -H "Authorization: Bearer #token#" -XPOST http://127.0.0.1:8000/notifications/refresh`
 
-Also, you could use Repository [webhooks to automate this process](http://cloud.spring.io/spring-cloud-config/spring-cloud-config.html#_push_notifications_and_spring_cloud_bus)
+此外，您可以使用webhooks库自动执行此过程 [webhooks to automate this process](http://cloud.spring.io/spring-cloud-config/spring-cloud-config.html#_push_notifications_and_spring_cloud_bus)
 
-##### Notes
-- There are some limitations for dynamic refresh though. `@RefreshScope` doesn't work with `@Configuration` classes and doesn't affect `@Scheduled` methods
-- `fail-fast` property means that Spring Boot application will fail startup immediately, if it cannot connect to the Config Service. That's very useful when start [all applications together](https://github.com/sqshq/PiggyMetrics#how-to-run-all-the-things)
-- There are significant [security notes](https://github.com/sqshq/PiggyMetrics#security) below
+##### 说明
+- 动态刷新仍然有一些限制。注解 `@RefreshScope` 不能与`@Configuration`在类中一起使用，并且在 `@Scheduled`注解的方法中不起作用。
+- 如果它无法连接到Config Service，fail-fast属性意味着Spring Boot应用程序将立即失败启动。这在[启动所有应用程序](https://github.com/sqshq/PiggyMetrics#how-to-run-all-the-things)时非常有用。 
+- 下面是一些重要的[安全说明](https://github.com/sqshq/PiggyMetrics#security)
+
 
 ### Auth service
 Authorization responsibilities are completely extracted to separate server, which grants [OAuth2 tokens](https://tools.ietf.org/html/rfc6749) for the backend resource services. Auth Server is used for user authorization as well as for secure machine-to-machine communication inside a perimeter.
