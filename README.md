@@ -139,24 +139,25 @@ zuul:
 这意味着所有以/ notifications开头的请求都将路由到通知服务。你可以看到这里并没有硬编码的地址。Zuul使用服务发现机制( [Service discovery](https://github.com/sqshq/PiggyMetrics/blob/master/README.md#service-discovery))来定位通知服务实例、断路器以及负载平衡器，以下将进行阐述。
 
 
-### Service discovery
+### 服务发现
+另一个公知的架构模式是服务发现。它允许自动检测服务实例的网络位置，由于自动扩展，故障和升级，可能会动态分配地址。
 
-Another commonly known architecture pattern is Service discovery. It allows automatic detection of network locations for service instances, which could have dynamically assigned addresses because of auto-scaling, failures and upgrades.
+服务发现的关键部分是注册。我在这个项目中使用Netflix Eureka。当客户端负责决定可用的服务实例（使用注册表服务器）的位置和加载负载均衡请求时，Eureka是客户端发现模式的一个很好的例子。
 
-The key part of Service discovery is Registry. I use Netflix Eureka in this project. Eureka is a good example of the client-side discovery pattern, when client is responsible for determining locations of available service instances (using Registry server) and load balancing requests across them.
+Spring Boot中，您可以轻松地使用spring-cloud-starter-eureka-server依赖，@EnableEurekaServer注解和简单的配置属性来构建Eureka 注册。
 
-With Spring Boot, you can easily build Eureka Registry with `spring-cloud-starter-eureka-server` dependency, `@EnableEurekaServer` annotation and simple configuration properties.
+客户端支持在bootstrap.yml中使用@EnableDiscoveryClient注解，以应用名识别：
 
-Client support enabled with `@EnableDiscoveryClient` annotation an `bootstrap.yml` with application name:
 ``` yml
 spring:
   application:
     name: notification-service
 ```
 
-Now, on application startup, it will register with Eureka Server and provide meta-data, such as host and port, health indicator URL, home page etc. Eureka receives heartbeat messages from each instance belonging to a service. If the heartbeat fails over a configurable timetable, the instance will be removed from the registry.
+现在，在应用程序启动时，它将注册到Eureka服务器并提供元数据，如主机和端口，健康指示器URL，主页等。Eureka从属于一个服务的每个实例接收心跳消息。如果在可配置的时间表发生心跳故障，则实例将从注册表中删除。
 
-Also, Eureka provides a simple interface, where you can track running services and number of available instances: `http://localhost:8761`
+此外，Eureka提供了一个简单的界面，您可以跟踪运行的服务和可用实例数：
+`http://localhost:8761`
 
 ### Load balancer, Circuit breaker and Http client
 
