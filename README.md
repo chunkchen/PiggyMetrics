@@ -42,18 +42,19 @@ GET	| /statistics/demo	| 获取演示账户统计数据	|   | ×
 PUT	| /statistics/{account}	| 创建或更新指定账户的具体时间元数据	|   | 
 
 
-#### Notification service
-Stores users contact information and notification settings (like remind and backup frequency). Scheduled worker collects required information from other services and sends e-mail messages to subscribed customers.
+#### 通知服务
+存储用户联系信息和通知设置（比如提醒周期和备份周期），根据预定的计划从其他微服务收集必要的信息并发送给订阅客户。
 
 Method	| Path	| Description	| User authenticated	| Available from UI
 ------------- | ------------------------- | ------------- |:-------------:|:----------------:|
-GET	| /notifications/settings/current	| Get current account notification settings	| × | ×	
-PUT	| /notifications/settings/current	| Save current account notification settings	| × | ×
+GET	| /notifications/settings/current	| 获取当前账户通知设置信息	| × | ×	
+PUT	| /notifications/settings/current	| 保存当前通知设置信息	| × | ×
 
 #### Notes
-- Each microservice has it's own database, so there is no way to bypass API and access persistance data directly.
-- In this project, I use MongoDB as a primary database for each service. It might also make sense to have a polyglot persistence architecture (сhoose the type of db that is best suited to service requirements).
-- Service-to-service communication is quite simplified: microservices talking using only synchronous REST API. Common practice in a real-world systems is to use combination of interaction styles. For example, perform synchronous GET request to retrieve data and use asynchronous approach via Message broker for create/update operations in order to decouple services and buffer messages. However, this brings us in [eventual consistency](http://martinfowler.com/articles/microservice-trade-offs.html#consistency) world.
+- 每个微服务都有自己的数据库，不使用API将无法直接访问持久化数据。
+- 本工程中，我使用MongoDB 作为每个微服务的主数据库。也许支持多种持久性结构显得更有意义（可选择数据库的类型是服务最适合的方式）。
+- 服务之间的通讯非常简单：微服务只使用同步的REST API进行通信。现实情况中，常见的做法是结合使用不同的交互方式。例如：为了解耦服务和缓存消息，GET操作中一般使用同步的方式请求和获取数据；而在创建和更新操作中则通过消息代理实现异步处理。这些方法将达成最终一致（[eventual consistency](http://martinfowler.com/articles/microservice-trade-offs.html#consistency)）的目标。
+
 
 ## Infrastructure services
 There's a bunch of common patterns in distributed systems, which could help us to make described core services work. [Spring cloud](http://projects.spring.io/spring-cloud/) provides powerful tools that enhance Spring Boot applications behaviour to implement those patterns. I'll cover them briefly.
