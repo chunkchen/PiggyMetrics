@@ -96,16 +96,17 @@ spring:
 - 下面是一些重要的[安全说明](https://github.com/sqshq/PiggyMetrics#security)
 
 
-### Auth service
-Authorization responsibilities are completely extracted to separate server, which grants [OAuth2 tokens](https://tools.ietf.org/html/rfc6749) for the backend resource services. Auth Server is used for user authorization as well as for secure machine-to-machine communication inside a perimeter.
+### 授权服务
+授权责任完全抽取到单独的服务器，它为后端资源服务授予[OAuth2 tokens](https://tools.ietf.org/html/rfc6749)令牌。授权服务器在边界内为用户授权提供安全的机对机通讯。
 
-In this project, I use [`Password credentials`](https://tools.ietf.org/html/rfc6749#section-4.3) grant type for users authorization (since it's used only by native PiggyMetrics UI) and [`Client Credentials`](https://tools.ietf.org/html/rfc6749#section-4.4) grant for microservices authorization.
+本项目中，我使用密码凭据类型（[`Password credentials`](https://tools.ietf.org/html/rfc6749#section-4.3) ）实现用户授权（因为它仅由本地PiggyMetrics UI使用），使用客户端凭证（[`Client Credentials`](https://tools.ietf.org/html/rfc6749#section-4.4)）实现微服务授权。
 
-Spring Cloud Security provides convenient annotations and autoconfiguration to make this really easy to implement from both server and client side. You can learn more about it in [documentation](http://cloud.spring.io/spring-cloud-security/spring-cloud-security.html) and check configuration details in [Auth Server code](https://github.com/sqshq/PiggyMetrics/tree/master/auth-service/src/main/java/com/piggymetrics/auth).
+Spring Cloud Security提供了方便的注释和自动配置，使得从服务器端和客户端都很容易实现。您可以在[文档](http://cloud.spring.io/spring-cloud-security/spring-cloud-security.html) 中了解更多信息，并在[Auth Server代码](https://github.com/sqshq/PiggyMetrics/tree/master/auth-service/src/main/java/com/piggymetrics/auth)中检查配置详细信息。
 
-From the client side, everything works exactly the same as with traditional session-based authorization. You can retrieve `Principal` object from request, check user's roles and other stuff with expression-based access control and `@PreAuthorize` annotation.
+就客户端而言，一切工作与传统的基于会话的授权相同。您可以从请求中检索`Principal`对象，通过基于表达式的访问控制和`@PreAuthorize`注解检查用户的角色和其他内容。
 
-Each client in PiggyMetrics (account-service, statistics-service, notification-service and browser) has a scope: `server` for backend services, and `ui` - for the browser. So we can also protect controllers from external access, for example:
+
+PiggyMetrics中的每个客户端（帐户服务，统计服务，通知服务和浏览器）都有一个范围：服务器用于后端服务，ui  - 用于浏览器。因此，我们还可以保护控制器免受外部访问，例如：
 
 ``` java
 @PreAuthorize("#oauth2.hasScope('server')")
@@ -115,14 +116,15 @@ public List<DataPoint> getStatisticsByAccountName(@PathVariable String name) {
 }
 ```
 
-### API Gateway
-As you can see, there are three core services, which expose external API to client. In a real-world systems, this number can grow very quickly as well as whole system complexity. Actualy, hundreds of services might be involved in rendering one complex webpage.
+### API网关
+可以看到，有三个核心服务向客户端公开外部API。现实系统中，这个数字随着系统的复杂性增加将会快速增长。实际上，可能数百种服务都会参与渲染某个复杂网页。
 
-In theory, a client could make requests to each of the microservices directly. But obviously, there are challenges and limitations with this option, like necessity to know all endpoints addresses, perform http request for each peace of information separately, merge the result on a client side. Another problem is non web-friendly protocols, which might be used on the backend.
+理论上，客户端可以直接向每个微服务器发出请求。但很显然，在类似需要知道所有端点地址，分别执行每一个分离的http请求，并且在客户端合并结果数据方面，这种方式存在相当的挑战和限制。另一个问题是网络友好协议可能在后端使用。
 
-Usually a much better approach is to use API Gateway. It is a single entry point into the system, used to handle requests by routing them to the appropriate backend service or by invoking multiple backend services and [aggregating the results](http://techblog.netflix.com/2013/01/optimizing-netflix-api.html). Also, it can be used for authentication, insights, stress and canary testing, service migration, static response handling, active traffic management.
+更好的方法是使用API网关。它是进入系统的单一入口，通过路由将请求分发到恰当的后端服务或直接调用多个后端服务进行处理，[并将结果进行聚合](http://techblog.netflix.com/2013/01/optimizing-netflix-api.html)。此外，它可用于身份验证，insights，压力测试和canary 测试，服务迁移，静态响应处理，主动流量管理等。
 
-Netflix opensourced [such an edge service](http://techblog.netflix.com/2013/06/announcing-zuul-edge-service-in-cloud.html), and now with Spring Cloud we can enable it with one `@EnableZuulProxy` annotation. In this project, I use Zuul to store static content (ui application) and to route requests to appropriate microservices. Here's a simple prefix-based routing configuration for Notification service:
+Netflix开源了一个[边界服务](http://techblog.netflix.com/2013/06/announcing-zuul-edge-service-in-cloud.html)，在Spring Cloud中我们可以用一个@EnableZuulProxy 注解使用它。在这个项目中，我使用Zuul来存储静态内容（ui应用程序）并且将请求路由到适当的微服务。以下是一个通知服务中基于前缀的简单路由配置：
+
 
 ```yml
 zuul:
@@ -134,7 +136,8 @@ zuul:
 
 ```
 
-That means all requests starting with `/notifications` will be routed to Notification service. There is no hardcoded address, as you can see. Zuul uses [Service discovery](https://github.com/sqshq/PiggyMetrics/blob/master/README.md#service-discovery) mechanism to locate Notification service instances and also [Circuit Breaker and Load Balancer](https://github.com/sqshq/PiggyMetrics/blob/master/README.md#http-client-load-balancer-and-circuit-breaker), described below.
+这意味着所有以/ notifications开头的请求都将路由到通知服务。你可以看到这里并没有硬编码的地址。Zuul使用服务发现机制( [Service discovery](https://github.com/sqshq/PiggyMetrics/blob/master/README.md#service-discovery))来定位通知服务实例、断路器以及负载平衡器，以下将进行阐述。
+
 
 ### Service discovery
 
