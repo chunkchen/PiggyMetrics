@@ -200,43 +200,45 @@ public interface StatisticsServiceClient {
 - 你可以在Spring MVC控制器和Feign方法之间共享`@RequestMapping` 
 - 通过Eureka自动发现，上面的示例指定只需要服务id  - 统计服务，（显然，您可以访问任何资源与特定的URL）
 
-### Monitor dashboard
+### 监视仪表盘 
 
-In this project configuration, each microservice with Hystrix on board pushes metrics to Turbine via Spring Cloud Bus (with AMQP broker). The Monitoring project is just a small Spring boot application with [Turbine](https://github.com/Netflix/Turbine) and [Hystrix Dashboard](https://github.com/Netflix/Hystrix/tree/master/hystrix-dashboard).
+在这个项目配置中，Hystrix的每个微服务通过Spring Cloud Bus（使用AMQP代理）将指标推送到Turbine，本项目只是与  [Turbine](https://github.com/Netflix/Turbine) 和 [Hystrix Dashboard](https://github.com/Netflix/Hystrix/tree/master/hystrix-dashboard)集成的Spring Boot应用。
 
-See below [how to get it up and running](https://github.com/sqshq/PiggyMetrics#how-to-run-all-the-things).
 
-Let's see our system behavior under load: Account service calls Statistics service and it responses with a vary imitation delay. Response timeout threshold is set to 1 second.
+ [下面看它如何运行](https://github.com/sqshq/PiggyMetrics#how-to-run-all-the-things).
+
+让我们看看我们的系统在负载下的行为：帐户服务调用统计服务时，通过不同的模仿延迟进行响应。响应超时阈值设置为1秒。
 
 <img width="880" src="https://cloud.githubusercontent.com/assets/6069066/14194375/d9a2dd80-f7be-11e5-8bcc-9a2fce753cfe.png">
 
 <img width="212" src="https://cloud.githubusercontent.com/assets/6069066/14127349/21e90026-f628-11e5-83f1-60108cb33490.gif">	| <img width="212" src="https://cloud.githubusercontent.com/assets/6069066/14127348/21e6ed40-f628-11e5-9fa4-ed527bf35129.gif"> | <img width="212" src="https://cloud.githubusercontent.com/assets/6069066/14127346/21b9aaa6-f628-11e5-9bba-aaccab60fd69.gif"> | <img width="212" src="https://cloud.githubusercontent.com/assets/6069066/14127350/21eafe1c-f628-11e5-8ccd-a6b6873c046a.gif">
 --- |--- |--- |--- |
-| `0 ms delay` | `500 ms delay` | `800 ms delay` | `1100 ms delay`
-| Well behaving system. The throughput is about 22 requests/second. Small number of active threads in Statistics service. The median service time is about 50 ms. | The number of active threads is growing. We can see purple number of thread-pool rejections and therefore about 30-40% of errors, but circuit is still closed. | Half-open state: the ratio of failed commands is more than 50%, the circuit breaker kicks in. After sleep window amount of time, the next request is let through. | 100 percent of the requests fail. The circuit is now permanently open. Retry after sleep time won't close circuit again, because the single request is too slow.
+| `0 ms 延迟` | `500 ms 延迟` | `800 ms 延迟` | `1100 ms 延迟`
+| 系统表现良好。吞吐量约为22请求/秒。统计服务中的活动线程数较少。中位服务时间约为50 ms。 | 活动线程的数量在增加。我们可以看到紫色线程池拒绝的数量，因此约30-40％的错误，但轮询仍然关闭。 | 半开状态：故障命令的比率大于50％，断路器启动。在睡眠窗口的时间后，下一个请求被允许通过。 | 100％的请求失败。轮询现在永久打开。在睡眠时间后重试不会再次闭合轮询，因为单个请求太慢。
 
-### Log analysis
+### 日志分析
 
-Centralized logging can be very useful when attempting to identify problems in a distributed environment. Elasticsearch, Logstash and Kibana stack lets you search and analyze your logs, utilization and network activity data with ease.
-Ready-to-go Docker configuration described [in my other project](http://github.com/sqshq/ELK-docker).
+当尝试在分布式环境中识别问题时，集中式日志记录可能非常有用。使用Elasticsearch，Logstash和Kibana stack，您可以轻松地搜索和分析您的日志、资源利用率和网络活动数据。可以从我的其他项目[ my other project](http://github.com/sqshq/ELK-docker)中了解Docker配置。
 
-## Security
 
-An advanced security configuration is beyond the scope of this proof-of-concept project. For a more realistic simulation of a real system, consider to use https, JCE keystore to encrypt Microservices passwords and Config server properties content (see [documentation](http://cloud.spring.io/spring-cloud-config/spring-cloud-config.html#_security) for details).
 
-## Infrastructure automation
+## 安全性
 
-Deploying microservices, with their interdependence, is much more complex process than deploying monolithic application. It is important to have fully automated infrastructure. We can achieve following benefits with Continuous Delivery approach:
+高级安全配置超出了此概念验证项目的范围。在更真实的模拟系统中，考虑使用https，JCE密钥库加密微服务密码和配置服务器属性内容（有关详细信息，请参阅[文档](http://cloud.spring.io/spring-cloud-config/spring-cloud-config.html#_security)）
 
-- The ability to release software anytime
-- Any build could end up being a release
-- Build artifacts once - deploy as needed
+## 基础架构自动化
 
-Here is a simple Continuous Delivery workflow, implemented in this project:
+相比部署单个的应用程序，部署微服务及其相互依赖性要复杂得多，拥有完全自动化的基础架构显得非常重要。我们可以通过持续交付方法获得以下益处：
+
+- 随时发布软件版本的能力
+- 任何构建结束都可以发布
+- 一次构建- 根据需要部署 
+
+这个项目中实现了一个简单的持续交付工作流：
 
 <img width="880" src="https://cloud.githubusercontent.com/assets/6069066/14159789/0dd7a7ce-f6e9-11e5-9fbb-a7fe0f4431e3.png">
 
-In this [configuration](https://github.com/sqshq/PiggyMetrics/blob/master/.travis.yml), Travis CI builds tagged images for each successful git push. So, there are always `latest` image for each microservice on [Docker Hub](https://hub.docker.com/r/sqshq/) and older images, tagged with git commit hash. It's easy to deploy any of them and quickly rollback, if needed.
+在此配置中( [configuration](https://github.com/sqshq/PiggyMetrics/blob/master/.travis.yml))，Travis CI为每个成功的git push建立标记的镜像。因此，对于Docker Hub和旧镜像上的每个微服务，始终有最新的镜像，它们都用git commit hash进行标记。如果需要，快速部署或回滚任何一个镜像将会变得简单。
 
 ## How to run all the things?
 
