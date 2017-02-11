@@ -157,28 +157,34 @@ spring:
 现在，在应用程序启动时，它将注册到Eureka服务器并提供元数据，如主机和端口，健康指示器URL，主页等。Eureka从属于一个服务的每个实例接收心跳消息。如果在可配置的时间表发生心跳故障，则实例将从注册表中删除。
 
 此外，Eureka提供了一个简单的界面，您可以跟踪运行的服务和可用实例数：
+
 `http://localhost:8761`
 
-### Load balancer, Circuit breaker and Http client
+### 负载均衡器，断路器和Http客户端
 
-Netflix OSS provides another great set of tools. 
+Netflix OSS提供了一系列强大的工具集。 
 
 #### Ribbon
-Ribbon is a client side load balancer which gives you a lot of control over the behaviour of HTTP and TCP clients. Compared to a traditional load balancer, there is no need in additional hop for every over-the-wire invocation - you can contact desired service directly.
+Ribbon是一个可以对HTTP和TCP客户端的行为进行控制客户端负载均衡器。与传统的负载均衡器相比，Ribbon无需对每个线上调用都处理心跳，您可以直接访问所需的服务。
 
-Out of the box, it natively integrates with Spring Cloud and Service Discovery. [Eureka Client](https://github.com/sqshq/PiggyMetrics#service-discovery) provides a dynamic list of available servers so Ribbon could balance between them.
+它与Spring Cloud和服务发现本身集成，因此可开箱即用。 [Eureka Client](https://github.com/sqshq/PiggyMetrics#service-discovery)提供了可用服务器的动态列表，以便Ribbon可以在它们之间进行平衡。
+
 
 #### Hystrix
-Hystrix is the implementation of [Circuit Breaker pattern](http://martinfowler.com/bliki/CircuitBreaker.html), which gives a control over latency and failure from dependencies accessed over the network. The main idea is to stop cascading failures in a distributed environment with a large number of microservices. That helps to fail fast and recover as soon as possible - important aspects of fault-tolerant systems that self-heal.
+Hystrix是断路器模式（[Circuit Breaker pattern](http://martinfowler.com/bliki/CircuitBreaker.html)）的实现，它提供了对通过网络访问的依赖性的延迟和故障的控制。主要实现思路是在具有大量微服务的分布式环境中停止级联故障。在容错系统的自我治愈方面，它帮助错误尽可能的快速发现并且恢复。
 
-Besides circuit breaker control, with Hystrix you can add a fallback method that will be called to obtain a default value in case the main command fails.
+除了断路器控制，使用Hystrix，您可以添加一个后备方法，在主命令失败的情况下调用该方法以获取默认值。
 
-Moreover, Hystrix generates metrics on execution outcomes and latency for each command, that we can use to [monitor system behavior](https://github.com/sqshq/PiggyMetrics#monitor-dashboard).
+此外，Hystrix生成每个命令的执行结果和延迟的指标，我们可以用它来监视系统行为（[monitor system behavior](https://github.com/sqshq/PiggyMetrics#monitor-dashboard)）。
+
 
 #### Feign
-Feign is a declarative Http client, which seamlessly integrates with Ribbon and Hystrix. Actually, with one `spring-cloud-starter-feign` dependency and `@EnableFeignClients` annotation you have a full set of Load balancer, Circuit breaker and Http client with sensible ready-to-go default configuration.
 
-Here is an example from Account Service:
+Feign是一个与Ribbon和Hystrix无缝集成的声明式Http客户端。实际上，使用一个`spring-cloud-starter-feign`依赖和`@EnableFeignClients`注解，您拥有一组完整的负载均衡器，断路器和Http客户端以及合理的即用型默认配置。
+以下是帐户服务的示例：
+
+
+你需要的只是一个接口： 
 
 ``` java
 @FeignClient(name = "statistics-service")
@@ -190,9 +196,9 @@ public interface StatisticsServiceClient {
 }
 ```
 
-- Everything you need is just an interface
-- You can share `@RequestMapping` part between Spring MVC controller and Feign methods
-- Above example specifies just desired service id - `statistics-service`, thanks to autodiscovery through Eureka (but obviously you can access any resource with a specific url)
+- 你需要的只是一个接口
+- 你可以在Spring MVC控制器和Feign方法之间共享`@RequestMapping` 
+- 通过Eureka自动发现，上面的示例指定只需要服务id  - 统计服务，（显然，您可以访问任何资源与特定的URL）
 
 ### Monitor dashboard
 
