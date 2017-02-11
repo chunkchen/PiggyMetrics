@@ -240,34 +240,33 @@ public interface StatisticsServiceClient {
 
 在此配置中( [configuration](https://github.com/sqshq/PiggyMetrics/blob/master/.travis.yml))，Travis CI为每个成功的git push建立标记的镜像。因此，对于Docker Hub和旧镜像上的每个微服务，始终有最新的镜像，它们都用git commit hash进行标记。如果需要，快速部署或回滚任何一个镜像将会变得简单。
 
-## How to run all the things?
+## 如何运行所有环境?
 
-Keep in mind, that you are going to start 8 Spring Boot applications, 4 MongoDB instances and RabbitMq. Make sure you have `4 Gb` RAM available on your machine. You can always run just vital services though: Gateway, Registry, Config, Auth Service and Account Service.
+记住，你要启动8个Spring Boot应用程序，4个MongoDB实例和RabbitMq。确保您的机器上有4 Gb RAM可用。您可以始终运行重要的服务：网关，注册，配置，认证服务和帐户服务。
 
-#### Before you start
-- Install Docker and Docker Compose.
-- Export environment variables: `CONFIG_SERVICE_PASSWORD`, `NOTIFICATION_SERVICE_PASSWORD`, `STATISTICS_SERVICE_PASSWORD`, `ACCOUNT_SERVICE_PASSWORD`, `MONGODB_PASSWORD`
+#### 在你开始之前
+- 安装 Docker and Docker Compose.
+- 导出环境变量: `CONFIG_SERVICE_PASSWORD`, `NOTIFICATION_SERVICE_PASSWORD`, `STATISTICS_SERVICE_PASSWORD`, `ACCOUNT_SERVICE_PASSWORD`, `MONGODB_PASSWORD`
 
-#### Production mode
-In this mode, all latest images will be pulled from Docker Hub. Just copy `docker-compose.yml` and hit `docker-compose up -d`.
+#### 生产模式
+在这种模式下，所有最新的镜像将从Docker Hub中提取。只需复制 `docker-compose.yml`并且执行 `docker-compose up -d`。 
 
-#### Development mode
-If you'd like to build images yourself (with some changes in the code, for example), you have to clone all repository and build artifacts with maven. Then, run `docker-compose -f docker-compose.yml -f docker-compose.dev.yml up -d`
+#### 开发模式
+如果你想自己构建镜像（例如在代码中有一些变化），建议你使用maven克隆所有的库和artifacts 。.然后，继承`docker-compose.yml`运行 `docker-compose -f docker-compose.yml -f docker-compose.dev.yml up -d` `docker-compose.dev.yml` ，可以在本地构建映像，并开放所有容器端口以方便开发。
 
-`docker-compose.dev.yml` inherits `docker-compose.yml` with additional possibility to build images locally and expose all containers ports for convenient development.
-
-#### Important endpoints
+#### 重要节点
 - http://DOCKER-HOST:80 - Gateway
 - http://DOCKER-HOST:8761 - Eureka Dashboard
 - http://DOCKER-HOST:9000/hystrix - Hystrix Dashboard
 - http://DOCKER-HOST:8989 - Turbine stream (source for the Hystrix Dashboard)
-- http://DOCKER-HOST:15672 - RabbitMq management (default login/password: guest/guest)
+- http://DOCKER-HOST:15672 - RabbitMq 管理 (default login/password: guest/guest)
 
-#### Notes
-All Spring Boot applications require already running [Config Server](https://github.com/sqshq/PiggyMetrics#config-service) for startup. But we can start all containers simultaneously because of `fail-fast` Spring Boot property and `restart: always` docker-compose option. That means all dependent containers will try to restart until Config Server will be up and running.
+#### 说明
+所有Spring Boot应用程序都需要运行[Config Server](https://github.com/sqshq/PiggyMetrics#config-service)进行启动。因为使用了`fail-fast` Spring Boot属性和`restart: always` docker-compose 选项，我们可以同时启动所有容器。
+这意味着在Config Server启动并运行之前，所有依赖的容器将尝试重新启动。
 
-Also, Service Discovery mechanism needs some time after all applications startup. Any service is not available for discovery by clients until the instance, the Eureka server and the client all have the same metadata in their local cache, so it could take 3 heartbeats. Default heartbeat period is 30 seconds.
+此外，服务发现机制需要在所有应用程序启动后一段时间才能生效。在实例，Eureka服务器和客户端都在其本地缓存中具有相同的元数据前，服务发现机制将不可用。因此，它可能需要3次心跳。默认心跳周期为30秒。
 
-## Feedback welcome
+## 欢迎反馈
 
-PiggyMetrics is open source, and would greatly appreciate your help. Feel free to contact me with any questions.
+PiggyMetrics是开源的，非常期望和感谢您的帮助。随时与我联系任何问题。
